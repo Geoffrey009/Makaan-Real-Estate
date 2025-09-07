@@ -82,4 +82,14 @@ const login = async (req, res) => {
     }
 }
 
-export { register, login };
+const getUserCount = async (req, res) => {
+    try {
+        const count = await User.countDocuments();
+        res.status(200).json({ totalUsers: count });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error while counting users" });
+    }
+}
+
+export { register, login, getUserCount };
