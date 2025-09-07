@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { register, login, getUserCount } from "../controllers/userController.js";
+import upload from "../middlewares/upload.js";
+import { register, login, getUserCount, uploadProfilePicture } from "../controllers/userController.js";
 
 const router = Router();
 
 router.post("/register", register);
 router.post("/login", login);
 router.get("/count", getUserCount);
+router.post("/upload-profile", upload.single("image"), uploadProfilePicture);
 
 export default router;

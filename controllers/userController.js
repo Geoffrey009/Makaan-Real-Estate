@@ -92,4 +92,28 @@ const getUserCount = async (req, res) => {
     }
 }
 
-export { register, login, getUserCount };
+const uploadProfilePicture = async (req, res) => {
+  try {
+    if (!req.file || !req.file.path) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // Cloudinary gives you the image URL in req.file.path
+    const imageUrl = req.file.path;
+
+    // TODO: Save this URL to your User model in DB (if you want persistence)
+    // Example:
+    // await User.findByIdAndUpdate(req.user.id, { profilePicture: imageUrl });
+
+    res.status(200).json({
+      message: "Profile picture uploaded successfully",
+      imageUrl,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error while uploading image" });
+  }
+};
+
+
+export { register, login, getUserCount, uploadProfilePicture };
