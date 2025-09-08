@@ -7,6 +7,6 @@ const router = Router();
 router.post("/register", register);
 router.post("/login", login);
 router.get("/count", getUserCount);
-router.post("/upload-profile", upload.single("image"), uploadProfilePicture);
+router.post("/upload-profile", upload.single("profilePicture"), uploadProfilePicture);
 
 export default router;
