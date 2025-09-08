@@ -93,31 +93,27 @@ const getUserCount = async (req, res) => {
 }
 
 const uploadProfilePicture = async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No file uploaded" });
-        }
-
-        // Cloudinary gives you the URL in req.file.path
-        const imageUrl = req.file.path;
-
-        if (!imageUrl) {
-            return res.status(500).json({ message: "Upload failed. No URL returned from Cloudinary." });
-        }
-
-        // Optionally: Save to DB
-        // await User.findByIdAndUpdate(req.user.id, { profilePicture: imageUrl });
-
-        return res.status(200).json({
-            message: "Profile picture uploaded successfully",
-            imageUrl,
-            file: req.file, // 👈 include this so we can debug if needed
-        });
-    } catch (error) {
-        console.error("Upload error:", error);
-        return res.status(500).json({ message: "Server error while uploading image" });
+  try {
+    if (!req.file || !req.file.path) {
+      return res.status(400).json({ message: "No file uploaded" });
     }
+
+    const imageUrl = req.file.path;
+
+    // 🔑 Update logged-in user's profile with the new image
+    // Assuming `req.user.id` is set by your auth middleware
+    await User.findByIdAndUpdate(req.user.id, { profilePicture: imageUrl });
+
+    res.status(200).json({
+      message: "Profile picture uploaded successfully",
+      imageUrl,
+    });
+  } catch (error) {
+    console.error("Upload error:", error);
+    res.status(500).json({ message: "Server error while uploading image" });
+  }
 };
+
 
 
 export { register, login, getUserCount, uploadProfilePicture };
