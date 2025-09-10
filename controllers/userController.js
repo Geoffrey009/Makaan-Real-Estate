@@ -100,20 +100,26 @@ const uploadProfilePicture = async (req, res) => {
 
     const imageUrl = req.file.path;
 
-    // 🔑 Update logged-in user's profile with the new image
-    // Assuming `req.user.id` is set by your auth middleware
-    await User.findByIdAndUpdate(req.user.id, { profilePicture: imageUrl });
+    // Update and return the updated user
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { profilePicture: imageUrl },
+      { new: true, select: "-password" } // return updated doc without password
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     res.status(200).json({
       message: "Profile picture uploaded successfully",
       imageUrl,
+      user: updatedUser,
     });
   } catch (error) {
     console.error("Upload error:", error);
     res.status(500).json({ message: "Server error while uploading image" });
   }
 };
-
-
 
 export { register, login, getUserCount, uploadProfilePicture };
