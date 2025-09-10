@@ -39,6 +39,7 @@ const register = async (req, res) => {
                 fullName: newUser.fullName,
                 email: newUser.email,
                 isAdmin: newUser.isAdmin,
+                profilePicture: newUser.profilePicture || "",
             },
         });
     } catch (error) {
@@ -73,6 +74,7 @@ const login = async (req, res) => {
                 fullName: user.fullName,
                 email: user.email,
                 isAdmin: user.isAdmin,
+                profilePicture: user.profilePicture || "",
             },
         });
 
