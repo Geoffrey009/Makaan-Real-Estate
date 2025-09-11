@@ -1,6 +1,6 @@
 import { Router } from "express";
 import upload from "../middlewares/upload.js";
-import { register, login, getUserCount, uploadProfilePicture } from "../controllers/userController.js";
+import { register, login, getUserCount, uploadProfilePicture, searchUsers } from "../controllers/userController.js";
 import authenticateUser from "../middlewares/authenticateUser.js";
 
 const router = Router();
@@ -14,5 +14,6 @@ router.post(
     upload.single("profilePicture"),
     uploadProfilePicture
 );
+router.get("/search", searchUsers);
 
 export default router;

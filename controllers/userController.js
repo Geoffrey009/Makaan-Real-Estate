@@ -127,4 +127,25 @@ const uploadProfilePicture = async (req, res) => {
     }
 };
 
+const searchUsers = async (req, res) => {
+  try {
+    const { name } = req.query;
+
+    if (!name) {
+      return res.status(400).json({ message: "Name query is required." });
+    }
+
+    // Search by fullName, case-insensitive
+    const users = await User.find({
+      fullName: { $regex: new RegExp(`^${name}`, "i") } 
+    }).select("fullName profilePic"); // only return fields you need
+
+    res.json({ users });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 export { register, login, getUserCount, uploadProfilePicture };
