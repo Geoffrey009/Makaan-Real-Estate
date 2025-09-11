@@ -148,4 +148,4 @@ const searchUsers = async (req, res) => {
 };
 
 
-export { register, login, getUserCount, uploadProfilePicture };
+export { register, login, getUserCount, uploadProfilePicture, searchUsers };
