@@ -46,7 +46,7 @@ export const googleAuth = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         isAdmin: user.isAdmin, // 👈 critical
-        picture: user.picture,
+        profilePicture: user.profilePicture,
       },
     });
   } catch (error) {
