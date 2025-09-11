@@ -54,17 +54,20 @@ const login = async (req, res) => {
         const { email, password } = req.body;
 
         const user = await User.findOne({ email });
-        !user && res.status(400).json({ message: "Invalid email or password" });
+        if (!user) {
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
-        !passwordMatch && res.status(400).json({ message: "Invalid email or password" });
+        if (!passwordMatch) {
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
 
-        const token = jwt.sign({
-            id: user._id,
-            isAdmin: user.isAdmin,
-        }, process.env.JWT_SECRET, {
-            expiresIn: "7d",
-        });
+        const token = jwt.sign(
+            { id: user._id, isAdmin: user.isAdmin },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
 
         return res.status(200).json({
             message: "Login successful",
@@ -74,15 +77,15 @@ const login = async (req, res) => {
                 fullName: user.fullName,
                 email: user.email,
                 isAdmin: user.isAdmin,
-                profilePicture: user.profilePicture || "",
+                profilePicture: user.profilePicture || "", // this should now work
             },
         });
-
     } catch (error) {
         console.error("Error during login:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
+
 
 const getUserCount = async (req, res) => {
     try {
@@ -95,33 +98,33 @@ const getUserCount = async (req, res) => {
 }
 
 const uploadProfilePicture = async (req, res) => {
-  try {
-    if (!req.file || !req.file.path) {
-      return res.status(400).json({ message: "No file uploaded" });
+    try {
+        if (!req.file || !req.file.path) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const imageUrl = req.file.path;
+
+        // Update and return the updated user
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            { profilePicture: imageUrl },
+            { new: true, select: "-password" } // return updated doc without password
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({
+            message: "Profile picture uploaded successfully",
+            imageUrl,
+            user: updatedUser,
+        });
+    } catch (error) {
+        console.error("Upload error:", error);
+        res.status(500).json({ message: "Server error while uploading image" });
     }
-
-    const imageUrl = req.file.path;
-
-    // Update and return the updated user
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      { profilePicture: imageUrl },
-      { new: true, select: "-password" } // return updated doc without password
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({
-      message: "Profile picture uploaded successfully",
-      imageUrl,
-      user: updatedUser,
-    });
-  } catch (error) {
-    console.error("Upload error:", error);
-    res.status(500).json({ message: "Server error while uploading image" });
-  }
 };
 
 export { register, login, getUserCount, uploadProfilePicture };
