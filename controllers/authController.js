@@ -4,16 +4,20 @@ import User from "../models/userSchema.js"; // 👈 import your User model
 
 export const googleAuth = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { access_token } = req.body; // ✅ now we expect access_token
 
-    // Verify token with Google API
-    const response = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
-    );
+    if (!access_token) {
+      return res.status(400).json({ message: "Access token is required" });
+    }
+
+    // ✅ Use access token to fetch user info from Google
+    const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
     const userInfo = await response.json();
 
-    if (userInfo.error_description) {
-      return res.status(400).json({ message: "Invalid token" });
+    if (userInfo.error) {
+      return res.status(400).json({ message: "Invalid Google access token" });
     }
 
     // 🔎 Check if user exists in DB
@@ -24,13 +28,17 @@ export const googleAuth = async (req, res) => {
       user = await User.create({
         fullName: userInfo.name,
         email: userInfo.email,
-        password: "", // Google users won’t need this
-        isAdmin: false, // default unless you manually set in DB
+        password: "", // Google users don’t need this
+        isAdmin: false, // default unless you set manually in DB
         picture: userInfo.picture,
       });
+    } else {
+      // Optional: keep Google picture always fresh
+      user.picture = userInfo.picture;
+      await user.save();
     }
 
-    // Create JWT for your app
+    // ✅ Create JWT for your app
     const myToken = jwt.sign(
       { id: user._id, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
