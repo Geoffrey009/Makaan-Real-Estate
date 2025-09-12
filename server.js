@@ -14,7 +14,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://makaan-real-estate.netlify.app",
+    credentials: true, // allow cookies if you’re using them
+  })
+);
 
 
 app.use("/api/carts", cartRoutes);
