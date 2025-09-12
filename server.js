@@ -19,6 +19,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(json());
+
+// ✅ General CORS for API routes
 app.use(
   cors({
     origin: "https://stately-melba-e779a0.netlify.app",
@@ -26,12 +28,19 @@ app.use(
   })
 );
 
+// ✅ Specific CORS for Google login route (POST from frontend)
+app.options("/auth/google", cors()); // handle preflight OPTIONS
+app.use("/auth/google", cors({
+  origin: "https://stately-melba-e779a0.netlify.app",
+  credentials: true,
+}));
+
 // Routes
 app.use("/api/carts", cartRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
-app.use("/auth", authRoutes);
+app.use("/auth", authRoutes); // other auth routes
 
 // Test route
 app.get("/", (req, res) => {
