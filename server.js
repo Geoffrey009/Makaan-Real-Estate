@@ -1,4 +1,4 @@
-\import cors from "cors";
+import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import express, { json } from "express";
