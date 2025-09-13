@@ -40,7 +40,7 @@ app.use(
 
 // Routes
 app.use("/api/carts", cartRoutes);
-app.use("/api/users", userRoutes); // will pass io in server.js later
+app.use("/api/users", userRoutes(io)); // will pass io in server.js later
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
 app.use("/auth", authRoutes);
