@@ -49,7 +49,7 @@ connectDB().then(() => {
     cors: {
       origin: "*", // allow all origins
       methods: ["GET", "POST"],
-      credentials: true,
+      // credentials: true,
     },
   });
 

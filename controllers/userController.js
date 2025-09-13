@@ -150,7 +150,7 @@ const searchUsers = async (req, res) => {
         // Search by fullName, case-insensitive
         const users = await User.find({
             fullName: { $regex: new RegExp(`^${name}`, "i") }
-        }).select("fullName profilePic"); // only return fields you need
+        }).select("fullName profilePicture"); // only return fields you need
 
         res.json({ users });
     } catch (err) {
