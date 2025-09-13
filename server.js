@@ -2,7 +2,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import express, { json } from "express";
-import http from "http"; // Needed for socket.io
+import http from "http";
 import { Server } from "socket.io";
 
 // Routes
@@ -28,19 +28,22 @@ app.use(
   })
 );
 
-// ✅ Specific CORS for Google login route (POST from frontend)
-app.options("/auth/google", cors()); // handle preflight OPTIONS
-app.use("/auth/google", cors({
-  origin: "https://stately-melba-e779a0.netlify.app",
-  credentials: true,
-}));
+// ✅ Specific CORS for Google login route
+app.options("/auth/google", cors());
+app.use(
+  "/auth/google",
+  cors({
+    origin: "https://stately-melba-e779a0.netlify.app",
+    credentials: true,
+  })
+);
 
 // Routes
 app.use("/api/carts", cartRoutes);
-app.use("/api/users", userRoutes);
+app.use("/api/users", userRoutes); // will pass io in server.js later
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
-app.use("/auth", authRoutes); // other auth routes
+app.use("/auth", authRoutes);
 
 // Test route
 app.get("/", (req, res) => {
@@ -51,7 +54,6 @@ app.get("/", (req, res) => {
 connectDB().then(() => {
   console.log("Database connected successfully");
 
-  // Create HTTP server (needed for socket.io)
   const server = http.createServer(app);
 
   // Initialize Socket.IO
@@ -63,16 +65,23 @@ connectDB().then(() => {
     },
   });
 
-  // Handle socket connections
+  // ⚡ Handle socket connections and assign rooms
   io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
-    // Listen for profile picture updates
+    // Optional: join room if userId is sent in query from frontend
+    const { userId } = socket.handshake.query;
+    if (userId) {
+      socket.join(userId); // join room per user
+      console.log(`Socket ${socket.id} joined room for user ${userId}`);
+    }
+
+    // Listen for profile picture updates from a client
     socket.on("profilePictureUpdated", (data) => {
       const { userId, imageUrl } = data;
 
-      // Broadcast to all other devices (except the one that sent it)
-      socket.broadcast.emit(`updateProfilePicture-${userId}`, imageUrl);
+      // Emit only to the room for that user (all devices of that user)
+      io.to(userId).emit(`updateProfilePicture-${userId}`, imageUrl);
     });
 
     socket.on("disconnect", () => {

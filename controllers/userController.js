@@ -101,7 +101,7 @@ const getUserCount = async (req, res) => {
     }
 }
 
-const uploadProfilePicture = async (req, res) => {
+const uploadProfilePicture = async (req, res, io) => {
     try {
         if (!req.file || !req.file.path) {
             return res.status(400).json({ message: "No file uploaded" });
@@ -109,7 +109,7 @@ const uploadProfilePicture = async (req, res) => {
 
         const imageUrl = req.file.path;
 
-        // Update and return the updated user
+        // ✅ Update the user in the database
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
             { profilePicture: imageUrl },
@@ -120,6 +120,13 @@ const uploadProfilePicture = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
+        // ⚡ Emit real-time update to all devices of this user
+        if (io) {
+            // Use a "room" per user if you set it in server.js
+            io.to(req.user.id).emit(`updateProfilePicture-${req.user.id}`, imageUrl);
+        }
+
+        // ✅ Return the updated user and imageUrl to current device
         res.status(200).json({
             message: "Profile picture uploaded successfully",
             imageUrl,
@@ -132,23 +139,23 @@ const uploadProfilePicture = async (req, res) => {
 };
 
 const searchUsers = async (req, res) => {
-  try {
-    const { name } = req.query;
+    try {
+        const { name } = req.query;
 
-    if (!name) {
-      return res.status(400).json({ message: "Name query is required." });
+        if (!name) {
+            return res.status(400).json({ message: "Name query is required." });
+        }
+
+        // Search by fullName, case-insensitive
+        const users = await User.find({
+            fullName: { $regex: new RegExp(`^${name}`, "i") }
+        }).select("fullName profilePic"); // only return fields you need
+
+        res.json({ users });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
     }
-
-    // Search by fullName, case-insensitive
-    const users = await User.find({
-      fullName: { $regex: new RegExp(`^${name}`, "i") } 
-    }).select("fullName profilePic"); // only return fields you need
-
-    res.json({ users });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
 };
 
 
