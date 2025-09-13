@@ -1,4 +1,4 @@
-import cors from "cors";
+\import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import express, { json } from "express";
@@ -38,13 +38,6 @@ app.use(
   })
 );
 
-// Routes
-app.use("/api/carts", cartRoutes);
-app.use("/api/users", userRoutes(io)); // will pass io in server.js later
-app.use("/api/orders", orderRoutes);
-app.use("/api/products", productRoutes);
-app.use("/auth", authRoutes);
-
 // Test route
 app.get("/", (req, res) => {
   res.send("Makaan API is live ✅");
@@ -54,9 +47,10 @@ app.get("/", (req, res) => {
 connectDB().then(() => {
   console.log("Database connected successfully");
 
+  // 1️⃣ Create HTTP server
   const server = http.createServer(app);
 
-  // Initialize Socket.IO
+  // 2️⃣ Initialize Socket.IO
   const io = new Server(server, {
     cors: {
       origin: "https://stately-melba-e779a0.netlify.app",
@@ -65,22 +59,27 @@ connectDB().then(() => {
     },
   });
 
-  // ⚡ Handle socket connections and assign rooms
+  // 3️⃣ Pass io to user routes
+  app.use("/api/users", userRoutes(io));
+
+  // 4️⃣ Other routes (don't depend on io)
+  app.use("/api/carts", cartRoutes);
+  app.use("/api/orders", orderRoutes);
+  app.use("/api/products", productRoutes);
+  app.use("/auth", authRoutes);
+
+  // ⚡ Handle socket connections
   io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
-    // Optional: join room if userId is sent in query from frontend
     const { userId } = socket.handshake.query;
     if (userId) {
       socket.join(userId); // join room per user
       console.log(`Socket ${socket.id} joined room for user ${userId}`);
     }
 
-    // Listen for profile picture updates from a client
     socket.on("profilePictureUpdated", (data) => {
       const { userId, imageUrl } = data;
-
-      // Emit only to the room for that user (all devices of that user)
       io.to(userId).emit(`updateProfilePicture-${userId}`, imageUrl);
     });
 
@@ -89,7 +88,7 @@ connectDB().then(() => {
     });
   });
 
-  // Start server
+  // 5️⃣ Start server
   server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
   });
