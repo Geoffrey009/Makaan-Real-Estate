@@ -17,62 +17,57 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON
+// ---------------------------
+// Middleware
+// ---------------------------
+
+// Parse JSON
 app.use(json());
 
-// ---------------------------
-// CORS setup for multiple origins
-// ---------------------------
-const allowedOrigins = [
-  "https://stately-melba-e779a0.netlify.app", // production
-  "http://localhost:5173"                     // local dev
-];
-
+// ⚡ Allow everything for CORS (dev-friendly, works with Google login, localhost, Netlify, etc.)
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser requests (Postman, server-to-server)
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error(`CORS policy: origin ${origin} not allowed`), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
+  origin: "*",
+  credentials: true, // allow cookies if needed
 }));
+app.options("*", cors()); // preflight for all routes
 
-// Preflight for all routes
-app.options("*", cors({ origin: allowedOrigins, credentials: true }));
-
+// ---------------------------
 // Test route
+// ---------------------------
 app.get("/", (req, res) => res.send("Makaan API is live ✅"));
 
-// Connect to MongoDB and start server
+// ---------------------------
+// Connect to DB and start server
+// ---------------------------
 connectDB().then(() => {
   console.log("Database connected successfully");
 
   const server = http.createServer(app);
 
-  // Initialize Socket.IO with CORS
+  // Socket.IO setup
   const io = new Server(server, {
     cors: {
-      origin: allowedOrigins,
+      origin: "*", // allow all origins
       methods: ["GET", "POST"],
-      credentials: true
-    }
+      credentials: true,
+    },
   });
 
   // Make io accessible to routes
   app.set("io", io);
 
+  // ---------------------------
   // Routes
+  // ---------------------------
   app.use("/api/users", userRoutes(io));
   app.use("/api/carts", cartRoutes);
   app.use("/api/orders", orderRoutes);
   app.use("/api/products", productRoutes);
   app.use("/auth", authRoutes);
 
-  // -------------------------
-  // Socket.IO Events
-  // -------------------------
+  // ---------------------------
+  // Socket.IO events
+  // ---------------------------
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
@@ -86,7 +81,9 @@ connectDB().then(() => {
     socket.on("disconnect", () => console.log("User disconnected:", socket.id));
   });
 
+  // ---------------------------
   // Start server
+  // ---------------------------
   server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }).catch((err) => {
   console.error("Failed to connect to database:", err);
