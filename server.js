@@ -20,76 +20,48 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(json());
 
-// ✅ General CORS for API routes
-app.use(
-  cors({
-    origin: "https://stately-melba-e779a0.netlify.app",
-    credentials: true,
-  })
-);
-
-// ✅ Specific CORS for Google login route
-app.options("/auth/google", cors());
-app.use(
-  "/auth/google",
-  cors({
-    origin: "https://stately-melba-e779a0.netlify.app",
-    credentials: true,
-  })
-);
+// CORS (general + preflight)
+const FRONTEND_ORIGIN = "https://stately-melba-e779a0.netlify.app";
+app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
+app.options("*", cors({ origin: FRONTEND_ORIGIN, credentials: true }));
 
 // Test route
-app.get("/", (req, res) => {
-  res.send("Makaan API is live ✅");
-});
+app.get("/", (req, res) => res.send("Makaan API is live ✅"));
 
-// Connect to DB and start server
+// Connect DB and start server
 connectDB().then(() => {
   console.log("Database connected successfully");
 
-  // 1️⃣ Create HTTP server
   const server = http.createServer(app);
 
-  // 2️⃣ Initialize Socket.IO
+  // Socket.IO
   const io = new Server(server, {
-    cors: {
-      origin: "https://stately-melba-e779a0.netlify.app",
-      methods: ["GET", "POST"],
-      credentials: true,
-    },
+    cors: { origin: FRONTEND_ORIGIN, methods: ["GET", "POST"], credentials: true },
   });
 
-  // 3️⃣ Pass io to user routes
+  // Pass io to routes that need it
   app.use("/api/users", userRoutes(io));
 
-  // 4️⃣ Other routes (don't depend on io)
+  // Other routes
   app.use("/api/carts", cartRoutes);
   app.use("/api/orders", orderRoutes);
   app.use("/api/products", productRoutes);
   app.use("/auth", authRoutes);
 
-  // ⚡ Handle socket connections
+  // Socket handling
   io.on("connection", (socket) => {
-    console.log("A user connected:", socket.id);
+    console.log("User connected:", socket.id);
 
     const { userId } = socket.handshake.query;
-    if (userId) {
-      socket.join(userId); // join room per user
-      console.log(`Socket ${socket.id} joined room for user ${userId}`);
-    }
+    if (userId) socket.join(userId);
 
     socket.on("profilePictureUpdated", (data) => {
-      const { userId, imageUrl } = data;
-      io.to(userId).emit(`updateProfilePicture-${userId}`, imageUrl);
+      io.to(data.userId).emit(`updateProfilePicture-${data.userId}`, data.imageUrl);
     });
 
-    socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
-    });
+    socket.on("disconnect", () => console.log("User disconnected:", socket.id));
   });
 
-  // 5️⃣ Start server
-  server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
+  // Start server
+  server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
