@@ -102,40 +102,41 @@ const getUserCount = async (req, res) => {
 }
 
 const uploadProfilePicture = async (req, res, io) => {
-    try {
-        if (!req.file || !req.file.path) {
-            return res.status(400).json({ message: "No file uploaded" });
-        }
-
-        const imageUrl = req.file.path;
-
-        // ✅ Update the user in the database
-        const updatedUser = await User.findByIdAndUpdate(
-            req.user.id,
-            { profilePicture: imageUrl },
-            { new: true, select: "-password" } // return updated doc without password
-        );
-
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // ⚡ Emit real-time update to all devices of this user
-        if (io) {
-            // Use a "room" per user if you set it in server.js
-            io.to(req.user.id).emit(`updateProfilePicture-${req.user.id}`, imageUrl);
-        }
-
-        // ✅ Return the updated user and imageUrl to current device
-        res.status(200).json({
-            message: "Profile picture uploaded successfully",
-            imageUrl,
-            user: updatedUser,
-        });
-    } catch (error) {
-        console.error("Upload error:", error);
-        res.status(500).json({ message: "Server error while uploading image" });
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
     }
+
+    // Cloudinary storage: use url
+    const imageUrl = req.file.path || req.file.secure_url || req.file.url;
+
+    if (!imageUrl) {
+      return res.status(500).json({ message: "Failed to get image URL from Cloudinary" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { profilePicture: imageUrl },
+      { new: true, select: "-password" }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (io) {
+      io.to(req.user.id).emit(`updateProfilePicture-${req.user.id}`, imageUrl);
+    }
+
+    res.status(200).json({
+      message: "Profile picture uploaded successfully",
+      imageUrl,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Upload error:", error);
+    res.status(500).json({ message: "Server error while uploading image" });
+  }
 };
 
 const searchUsers = async (req, res) => {
