@@ -27,7 +27,7 @@ app.use(json());
 // ⚡ CORS setup: allow multiple origins (dev + production)
 const allowedOrigins = [
   "http://localhost:5173", // React dev server
-  "https://stately-melba-e779a0.netlify.app", // deployed Netlify frontend
+  "https://makaan-frontend.vercel.app", // deployed Vercel frontend
 ];
 
 app.use(
