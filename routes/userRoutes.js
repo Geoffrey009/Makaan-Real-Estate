@@ -9,10 +9,10 @@ import {
 } from "../controllers/userController.js";
 import authenticateUser from "../middlewares/authenticateUser.js";
 
-const router = Router();
-
 // ⚡ Export a function that accepts io for real-time events
 const userRoutes = (io) => {
+    const router = Router(); // 👈 moved inside
+
     // ✅ Register
     router.post("/register", register);
 
