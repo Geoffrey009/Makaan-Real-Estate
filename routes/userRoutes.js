@@ -6,6 +6,7 @@ import {
     getUserCount,
     uploadProfilePicture,
     searchUsers,
+    getUserById,
 } from "../controllers/userController.js";
 import authenticateUser from "../middlewares/authenticateUser.js";
 
@@ -38,5 +39,7 @@ router.post(
 
 // ✅ Search users
 router.get("/search", searchUsers);
+
+router.get("/:id", getUserById);
 
 export default router;
