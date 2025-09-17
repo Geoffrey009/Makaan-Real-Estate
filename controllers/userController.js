@@ -35,7 +35,7 @@ const register = async (req, res) => {
             message: "User registered successfully",
             token, // <-- now included
             user: {
-                id: newUser._id,
+                _id: newUser._id,
                 fullName: newUser.fullName,
                 email: newUser.email,
                 isAdmin: newUser.isAdmin,
@@ -77,7 +77,7 @@ const login = async (req, res) => {
             message: "Login successful",
             token,
             user: {
-                id: user._id,
+                _id: user._id,
                 fullName: user.fullName,
                 email: user.email,
                 isAdmin: user.isAdmin,
