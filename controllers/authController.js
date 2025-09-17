@@ -25,16 +25,17 @@ export const googleAuth = async (req, res) => {
       user = await User.create({
         fullName: userInfo.name,
         email: userInfo.email,
-        password: "",
+        password: "", // Google users don’t need a password
         isAdmin: false,
         picture: userInfo.picture,
       });
     } else {
-      user.picture = userInfo.picture; // keep Google picture fresh
+      // Always keep profile picture up to date
+      user.picture = userInfo.picture;
       await user.save();
     }
 
-    // Emit to all devices if Socket.IO is set up
+    // Emit update to other devices if Socket.IO is active
     if (req.app.get("io")) {
       req.app.get("io").to(user._id.toString()).emit(
         `updateProfilePicture-${user._id}`,
@@ -52,7 +53,7 @@ export const googleAuth = async (req, res) => {
       message: "Google login successful",
       token: myToken,
       user: {
-        id: user._id,
+        _id: user._id,  // ✅ use _id for consistency
         fullName: user.fullName,
         email: user.email,
         isAdmin: user.isAdmin,
